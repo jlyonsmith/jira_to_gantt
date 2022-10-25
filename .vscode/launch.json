@@ -1,0 +1,67 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'jira_to_gantt'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--lib",
+          "--package=jira_to_gantt"
+        ],
+        "filter": {
+          "name": "jira_to_gantt",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'jira_to_gantt'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=jira_to_gantt",
+          "--package=jira_to_gantt"
+        ],
+        "filter": {
+          "name": "jira_to_gantt",
+          "kind": "bin"
+        }
+      },
+      "args": [
+        "scratch/original.csv",
+        "-o",
+        "scratch/project.json"
+      ],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'jira_to_gantt'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--package=jira_to_gantt"
+        ],
+        "filter": {
+          "name": "jira_to_gantt",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

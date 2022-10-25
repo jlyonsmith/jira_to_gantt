@@ -2,12 +2,13 @@
 use chrono::NaiveDate;
 use clap::Parser;
 use core::fmt::Arguments;
-use csv;
+use csv::{self, ByteRecord, StringRecord};
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs::File;
-use std::io::Write;
+use std::io::{BufRead, BufReader, Cursor, Write};
 use std::path::PathBuf;
+use std::{string, vec};
 
 mod log_macros;
 
@@ -47,6 +48,7 @@ pub struct ItemData {
     start_date: Option<NaiveDate>,
     #[serde(rename = "resource")]
     resource_index: Option<usize>,
+    open: bool,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -100,16 +102,16 @@ impl<'a> JiraToGanttTool<'a> {
             }
         };
 
-        let chart_data = self.read_jira_csv_file(cli.input_file)?;
+        let chart_data = self.read_jira_csv_file(&cli.input_file)?;
 
-        self.write_chart_data_file(cli.output_file, &chart_data)?;
+        self.write_chart_data_file(&cli.output_file, &chart_data)?;
 
         Ok(())
     }
 
     fn write_chart_data_file(
         self: &Self,
-        json_path: PathBuf,
+        json_path: &PathBuf,
         chart_data: &ChartData,
     ) -> Result<(), Box<dyn Error>> {
         let mut file = File::create(json_path)?;
@@ -119,14 +121,28 @@ impl<'a> JiraToGanttTool<'a> {
         Ok(())
     }
 
-    fn read_jira_csv_file(self: &Self, csv_path: PathBuf) -> Result<ChartData, Box<dyn Error>> {
-        let file = File::open(csv_path)?;
-        let mut rdr = csv::Reader::from_reader(file);
+    fn read_jira_csv_file(self: &Self, csv_path: &PathBuf) -> Result<ChartData, Box<dyn Error>> {
+        let mut rdr = csv::Reader::from_reader(File::open(csv_path)?);
         let mut resources: Vec<ResourceData> = vec![];
         let mut resource_items: Vec<Vec<ItemData>> = vec![];
+        let mut headers: Option<StringRecord> = None;
 
-        for result in rdr.deserialize() {
-            let record: JiraRecord = result?;
+        for (record_num, byte_record) in rdr.byte_records().enumerate() {
+            let byte_record: ByteRecord = byte_record?;
+
+            // Jira exports two junk lines at the start of the CSV
+            if record_num < 2 {
+                continue;
+            }
+
+            let string_record: StringRecord = StringRecord::from_byte_record_lossy(byte_record);
+
+            if headers.is_none() {
+                headers = Some(string_record);
+                continue;
+            }
+
+            let record: JiraRecord = string_record.deserialize(headers.as_ref())?;
 
             if record.key.is_empty() {
                 continue;
@@ -161,6 +177,7 @@ impl<'a> JiraToGanttTool<'a> {
                 start_date,
                 duration,
                 resource_index: Some(resource_index),
+                open: record.status != "Closed",
             });
         }
 
