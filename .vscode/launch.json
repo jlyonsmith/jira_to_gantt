@@ -39,9 +39,9 @@
         }
       },
       "args": [
-        "scratch/original.csv",
+        "scratch/jira.csv",
         "-o",
-        "scratch/project.json"
+        "scratch/jira.json"
       ],
       "cwd": "${workspaceFolder}"
     },

@@ -3,12 +3,12 @@ use chrono::NaiveDate;
 use clap::Parser;
 use core::fmt::Arguments;
 use csv::{self, ByteRecord, StringRecord};
-use serde::{Deserialize, Serialize};
+use gantt_chart::{ChartData, ItemData, ResourceData};
+use serde::Deserialize;
 use std::error::Error;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Cursor, Write};
+use std::io::Write;
 use std::path::PathBuf;
-use std::{string, vec};
 
 mod log_macros;
 
@@ -39,37 +39,9 @@ pub struct JiraToGanttTool<'a> {
     log: &'a dyn JiraToGanttLog,
 }
 
-// TODO: This should come from the gantt_chart tool as a library
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct ItemData {
-    title: String,
-    duration: Option<i64>,
-    #[serde(rename = "startDate", skip_serializing_if = "Option::is_none")]
-    start_date: Option<NaiveDate>,
-    #[serde(rename = "resource")]
-    resource_index: Option<usize>,
-    open: bool,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct ResourceData {
-    #[allow(dead_code)]
-    title: String,
-    #[serde(rename = "color")]
-    color_hex: u32,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct ChartData {
-    #[allow(dead_code)]
-    title: String,
-    resources: Vec<ResourceData>,
-    items: Vec<ItemData>,
-}
-
 #[derive(Deserialize, Debug)]
 struct JiraRecord {
-    #[serde(rename = "Key")]
+    #[serde(rename = "Issue key")]
     key: String,
     #[serde(rename = "Summary")]
     #[allow(dead_code)]
@@ -122,26 +94,14 @@ impl<'a> JiraToGanttTool<'a> {
     }
 
     fn read_jira_csv_file(self: &Self, csv_path: &PathBuf) -> Result<ChartData, Box<dyn Error>> {
-        let mut rdr = csv::Reader::from_reader(File::open(csv_path)?);
+        let mut reader = csv::Reader::from_reader(File::open(csv_path)?);
         let mut resources: Vec<ResourceData> = vec![];
         let mut resource_items: Vec<Vec<ItemData>> = vec![];
-        let mut headers: Option<StringRecord> = None;
+        let headers = reader.headers().cloned().ok();
 
-        for (record_num, byte_record) in rdr.byte_records().enumerate() {
+        for byte_record in reader.byte_records() {
             let byte_record: ByteRecord = byte_record?;
-
-            // Jira exports two junk lines at the start of the CSV
-            if record_num < 2 {
-                continue;
-            }
-
             let string_record: StringRecord = StringRecord::from_byte_record_lossy(byte_record);
-
-            if headers.is_none() {
-                headers = Some(string_record);
-                continue;
-            }
-
             let record: JiraRecord = string_record.deserialize(headers.as_ref())?;
 
             if record.key.is_empty() {
@@ -150,7 +110,7 @@ impl<'a> JiraToGanttTool<'a> {
 
             let mut start_date = Some(NaiveDate::parse_from_str(
                 &record.created,
-                "%-m/%-d/%y %H:%M",
+                "%-d/%b/%y %I:%M %p",
             )?);
             let resource_index;
 
