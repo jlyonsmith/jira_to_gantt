@@ -13,9 +13,11 @@ use std::path::PathBuf;
 mod log_macros;
 
 const JIRA_DAY_IN_SECONDS: f32 = 8.0 * 60.0 * 60.0;
-static RESOURCE_COLORS: [u32; 14] = [
+static RESOURCE_COLORS: [u32; 28] = [
     0xff1abc9c, 0xff3498db, 0xff9b59b6, 0xffe67e22, 0xff2ecc71, 0xffe74c3c, 0xfff39c12, 0xff27ae60,
-    0xff2980b9, 0xfff1c40f, 0xffd35400, 0xff8e44ad, 0xffc0392b, 0xff16a085,
+    0xff2980b9, 0xfff1c40f, 0xffd35400, 0xff8e44ad, 0xffc0392b, 0xff16a085, 0xff1abc9c, 0xff3498db,
+    0xff9b59b6, 0xffe67e22, 0xff2ecc71, 0xffe74c3c, 0xfff39c12, 0xff27ae60, 0xff2980b9, 0xfff1c40f,
+    0xffd35400, 0xff8e44ad, 0xffc0392b, 0xff16a085,
 ];
 
 #[derive(Parser)]
@@ -25,8 +27,11 @@ struct Cli {
     #[clap(value_name = "INPUT_FILE")]
     input_file: PathBuf,
 
-    #[clap(long = "output", short, value_name = "OUTPUT_FILE")]
+    #[clap(long = "json", short, value_name = "JSON_FILE")]
     output_file: PathBuf,
+
+    #[clap(long = "resource", short, value_name = "RESOURCES_FILE")]
+    resource_file: PathBuf,
 }
 
 pub trait JiraToGanttLog {
@@ -77,6 +82,7 @@ impl<'a> JiraToGanttTool<'a> {
         let chart_data = self.read_jira_csv_file(&cli.input_file)?;
 
         self.write_chart_data_file(&cli.output_file, &chart_data)?;
+        self.write_resource_table(&cli.resource_file, &chart_data)?;
 
         Ok(())
     }
@@ -89,6 +95,37 @@ impl<'a> JiraToGanttTool<'a> {
         let mut file = File::create(json_path)?;
 
         write!(file, "{}", json5::to_string(&chart_data)?)?;
+
+        Ok(())
+    }
+
+    fn write_resource_table(
+        self: &Self,
+        resource_path: &PathBuf,
+        chart_data: &ChartData,
+    ) -> Result<(), Box<dyn Error>> {
+        let mut file = File::create(resource_path)?;
+
+        writeln!(file, "<table>")?;
+        writeln!(file, "  <tbody>")?;
+        writeln!(file, "    <tr>")?;
+        writeln!(file, "      <th>Resource</th>")?;
+        writeln!(file, "      <th>Color</th>")?;
+        writeln!(file, "    </tr>")?;
+
+        for data in chart_data.resources.iter() {
+            writeln!(file, "    <tr>")?;
+            writeln!(file, "      <td>{}</td>", data.title)?;
+            writeln!(
+                file,
+                "      <td style=\"background-color: {};\"><br/></td>",
+                data.color_hex
+            )?;
+            writeln!(file, "    </tr>")?;
+        }
+
+        writeln!(file, "  </tbody>")?;
+        writeln!(file, "</table>")?;
 
         Ok(())
     }
@@ -121,7 +158,7 @@ impl<'a> JiraToGanttTool<'a> {
                 resource_index = resources.len();
                 resources.push(ResourceData {
                     title: record.assignee.to_owned(),
-                    color_hex: RESOURCE_COLORS[resource_index],
+                    color_hex: format!("#{:x}", RESOURCE_COLORS[resource_index]),
                 });
                 resource_items.push(vec![]);
             }
@@ -137,13 +174,14 @@ impl<'a> JiraToGanttTool<'a> {
                 start_date,
                 duration,
                 resource_index: Some(resource_index),
-                open: record.status != "Closed",
+                open: Some(record.status != "Closed"),
             });
         }
 
         Ok(ChartData {
             title: "".to_owned(),
             resources,
+            marked_date: None,
             items: resource_items
                 .iter()
                 .flatten()
