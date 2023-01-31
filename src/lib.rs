@@ -82,7 +82,6 @@ impl<'a> JiraToGanttTool<'a> {
         let chart_data = self.read_jira_csv_file(&cli.input_file)?;
 
         self.write_chart_data_file(&cli.output_file, &chart_data)?;
-        self.write_resource_table(&cli.resource_file, &chart_data)?;
 
         Ok(())
     }
@@ -95,37 +94,6 @@ impl<'a> JiraToGanttTool<'a> {
         let mut file = File::create(json_path)?;
 
         write!(file, "{}", json5::to_string(&chart_data)?)?;
-
-        Ok(())
-    }
-
-    fn write_resource_table(
-        self: &Self,
-        resource_path: &PathBuf,
-        chart_data: &ChartData,
-    ) -> Result<(), Box<dyn Error>> {
-        let mut file = File::create(resource_path)?;
-
-        writeln!(file, "<table>")?;
-        writeln!(file, "  <tbody>")?;
-        writeln!(file, "    <tr>")?;
-        writeln!(file, "      <th>Resource</th>")?;
-        writeln!(file, "      <th>Color</th>")?;
-        writeln!(file, "    </tr>")?;
-
-        for data in chart_data.resources.iter() {
-            writeln!(file, "    <tr>")?;
-            writeln!(file, "      <td>{}</td>", data.title)?;
-            writeln!(
-                file,
-                "      <td style=\"background-color: {};\"><br/></td>",
-                data.color_hex
-            )?;
-            writeln!(file, "    </tr>")?;
-        }
-
-        writeln!(file, "  </tbody>")?;
-        writeln!(file, "</table>")?;
 
         Ok(())
     }
