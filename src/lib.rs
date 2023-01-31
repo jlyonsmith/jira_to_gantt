@@ -7,7 +7,7 @@ use gantt_chart::{ChartData, ItemData};
 use serde::Deserialize;
 use std::error::Error;
 use std::fs::File;
-use std::io::Write;
+use std::io::{self, Error as IoError, Write};
 use std::path::PathBuf;
 
 mod log_macros;
@@ -22,7 +22,16 @@ struct Cli {
     input_file: PathBuf,
 
     #[clap(value_name = "OUTPUT_FILE")]
-    output_file: PathBuf,
+    output_file: Option<PathBuf>,
+}
+
+impl Cli {
+    fn get_output(&self) -> Result<Box<dyn Write>, IoError> {
+        match self.output_file {
+            Some(ref path) => File::open(path).map(|f| Box::new(f) as Box<dyn Write>),
+            None => Ok(Box::new(io::stdout())),
+        }
+    }
 }
 
 pub trait JiraToGanttLog {
@@ -72,19 +81,17 @@ impl<'a> JiraToGanttTool<'a> {
 
         let chart_data = self.read_jira_csv_file(&cli.input_file)?;
 
-        self.write_chart_data_file(&cli.output_file, &chart_data)?;
+        self.write_chart_data_file(cli.get_output()?, &chart_data)?;
 
         Ok(())
     }
 
     fn write_chart_data_file(
         self: &Self,
-        json_path: &PathBuf,
+        mut writer: Box<dyn Write>,
         chart_data: &ChartData,
     ) -> Result<(), Box<dyn Error>> {
-        let mut file = File::create(json_path)?;
-
-        write!(file, "{}", json5::to_string(&chart_data)?)?;
+        write!(writer, "{}", json5::to_string(&chart_data)?)?;
 
         Ok(())
     }
@@ -110,6 +117,7 @@ impl<'a> JiraToGanttTool<'a> {
             )?);
             let resource_index;
 
+            // Update resources and get the index into the array
             if let Some(index) = resources.iter().position(|s| *s == record.assignee) {
                 resource_index = index;
                 start_date = None;
@@ -132,6 +140,11 @@ impl<'a> JiraToGanttTool<'a> {
                 resource_index: Some(resource_index),
                 open: Some(record.status != "Closed"),
             });
+        }
+
+        // Turn empty resource into 'unassigned'
+        if let Some(index) = resources.iter().position(|s| s.is_empty()) {
+            resources[index] = "unassigned".to_owned();
         }
 
         Ok(ChartData {
