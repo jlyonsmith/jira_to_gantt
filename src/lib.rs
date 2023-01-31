@@ -3,7 +3,7 @@ use chrono::NaiveDate;
 use clap::Parser;
 use core::fmt::Arguments;
 use csv::{self, ByteRecord, StringRecord};
-use gantt_chart::{ChartData, ItemData, ResourceData};
+use gantt_chart::{ChartData, ItemData};
 use serde::Deserialize;
 use std::error::Error;
 use std::fs::File;
@@ -13,12 +13,6 @@ use std::path::PathBuf;
 mod log_macros;
 
 const JIRA_DAY_IN_SECONDS: f32 = 8.0 * 60.0 * 60.0;
-static RESOURCE_COLORS: [u32; 28] = [
-    0xff1abc9c, 0xff3498db, 0xff9b59b6, 0xffe67e22, 0xff2ecc71, 0xffe74c3c, 0xfff39c12, 0xff27ae60,
-    0xff2980b9, 0xfff1c40f, 0xffd35400, 0xff8e44ad, 0xffc0392b, 0xff16a085, 0xff1abc9c, 0xff3498db,
-    0xff9b59b6, 0xffe67e22, 0xff2ecc71, 0xffe74c3c, 0xfff39c12, 0xff27ae60, 0xff2980b9, 0xfff1c40f,
-    0xffd35400, 0xff8e44ad, 0xffc0392b, 0xff16a085,
-];
 
 #[derive(Parser)]
 #[clap(version, about, long_about = None)]
@@ -97,7 +91,7 @@ impl<'a> JiraToGanttTool<'a> {
 
     fn read_jira_csv_file(self: &Self, csv_path: &PathBuf) -> Result<ChartData, Box<dyn Error>> {
         let mut reader = csv::Reader::from_reader(File::open(csv_path)?);
-        let mut resources: Vec<ResourceData> = vec![];
+        let mut resources: Vec<String> = vec![];
         let mut resource_items: Vec<Vec<ItemData>> = vec![];
         let headers = reader.headers().cloned().ok();
 
@@ -116,15 +110,12 @@ impl<'a> JiraToGanttTool<'a> {
             )?);
             let resource_index;
 
-            if let Some(index) = resources.iter().position(|rd| rd.title == record.assignee) {
+            if let Some(index) = resources.iter().position(|s| *s == record.assignee) {
                 resource_index = index;
                 start_date = None;
             } else {
                 resource_index = resources.len();
-                resources.push(ResourceData {
-                    title: record.assignee.to_owned(),
-                    color_hex: format!("#{:x}", RESOURCE_COLORS[resource_index]),
-                });
+                resources.push(record.assignee.to_owned());
                 resource_items.push(vec![]);
             }
 
