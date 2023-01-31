@@ -7,7 +7,7 @@ use gantt_chart::{ChartData, ItemData};
 use serde::Deserialize;
 use std::error::Error;
 use std::fs::File;
-use std::io::{self, Error as IoError, Write};
+use std::io::{self, Error as IoError, Read, Write};
 use std::path::PathBuf;
 
 mod log_macros;
@@ -19,7 +19,7 @@ const JIRA_DAY_IN_SECONDS: f32 = 8.0 * 60.0 * 60.0;
 struct Cli {
     /// Specify the JSON data file
     #[clap(value_name = "INPUT_FILE")]
-    input_file: PathBuf,
+    input_file: Option<PathBuf>,
 
     #[clap(value_name = "OUTPUT_FILE")]
     output_file: Option<PathBuf>,
@@ -30,6 +30,13 @@ impl Cli {
         match self.output_file {
             Some(ref path) => File::open(path).map(|f| Box::new(f) as Box<dyn Write>),
             None => Ok(Box::new(io::stdout())),
+        }
+    }
+
+    fn get_input(&self) -> Result<Box<dyn Read>, IoError> {
+        match self.input_file {
+            Some(ref path) => File::open(path).map(|f| Box::new(f) as Box<dyn Read>),
+            None => Ok(Box::new(io::stdin())),
         }
     }
 }
@@ -79,7 +86,7 @@ impl<'a> JiraToGanttTool<'a> {
             }
         };
 
-        let chart_data = self.read_jira_csv_file(&cli.input_file)?;
+        let chart_data = self.read_jira_csv_file(cli.get_input()?)?;
 
         self.write_chart_data_file(cli.get_output()?, &chart_data)?;
 
@@ -87,7 +94,7 @@ impl<'a> JiraToGanttTool<'a> {
     }
 
     fn write_chart_data_file(
-        self: &Self,
+        &self,
         mut writer: Box<dyn Write>,
         chart_data: &ChartData,
     ) -> Result<(), Box<dyn Error>> {
@@ -96,8 +103,8 @@ impl<'a> JiraToGanttTool<'a> {
         Ok(())
     }
 
-    fn read_jira_csv_file(self: &Self, csv_path: &PathBuf) -> Result<ChartData, Box<dyn Error>> {
-        let mut reader = csv::Reader::from_reader(File::open(csv_path)?);
+    fn read_jira_csv_file(&self, reader: Box<dyn Read>) -> Result<ChartData, Box<dyn Error>> {
+        let mut reader = csv::Reader::from_reader(reader);
         let mut resources: Vec<String> = vec![];
         let mut resource_items: Vec<Vec<ItemData>> = vec![];
         let headers = reader.headers().cloned().ok();
