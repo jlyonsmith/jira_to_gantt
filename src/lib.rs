@@ -27,11 +27,8 @@ struct Cli {
     #[clap(value_name = "INPUT_FILE")]
     input_file: PathBuf,
 
-    #[clap(long = "json", short, value_name = "JSON_FILE")]
+    #[clap(value_name = "OUTPUT_FILE")]
     output_file: PathBuf,
-
-    #[clap(long = "resource", short, value_name = "RESOURCES_FILE")]
-    resource_file: PathBuf,
 }
 
 pub trait JiraToGanttLog {
