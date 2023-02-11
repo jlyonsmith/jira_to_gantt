@@ -6,7 +6,7 @@ authors = ["John Lyon-Smith <john@lyon-smith.org>"]
 readme = "README.md"
 description = "A tool to convert Jira CSV data to Gantt chart JSON5"
 repository = "https://github.com/jlyonsmith/jiro_to_gantt"
-keywords = ["gantt", "chart", "project", "graphics", "json5", "csv"]
+keywords = ["gantt", "chart", "project", "csv"]
 categories = ["command-line-utilities"]
 license = "Unlicense"
 
