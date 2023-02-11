@@ -55,9 +55,6 @@ pub struct JiraToGanttTool<'a> {
 struct JiraRecord {
     #[serde(rename = "Issue key")]
     key: String,
-    #[serde(rename = "Summary")]
-    #[allow(dead_code)]
-    summary: String,
     #[serde(rename = "Status")]
     #[allow(dead_code)]
     status: String,
