@@ -404,6 +404,8 @@ dependencies = [
 [[package]]
 name = "gantt_chart"
 version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c19f6860c483152251ca61199a1bedbd8aa03cd6bbb7179d9a61bdc599bbf78d"
 dependencies = [
  "chrono",
  "clap 4.0.11",
