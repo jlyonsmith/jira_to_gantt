@@ -1,5 +1,9 @@
 # Jira CSV to Gantt Chart JSON Converter
 
+[![coverage](https://shields.io/endpoint?url=https://raw.githubusercontent.com/jlyonsmith/jira_to_gantt/main/coverage.json)](https://github.com/jlyonsmith/jira_to_gantt/blob/main/coverage.json)
+[![Crates.io](https://img.shields.io/crates/v/jira_to_gantt.svg)](https://crates.io/crates/jira_to_gantt)
+[![Docs.rs](https://docs.rs/jira_to_gantt/badge.svg)](https://docs.rs/jira_to_gantt)
+
 This program converts Jira CSV exports to a format that can be ingested by the [gantt_chart](https://crates.io/crates/gantt_chart) tool.
 
 Install with `cargo install jira_to_gantt`.  Run with `jira-to-gantt`.
