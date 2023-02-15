@@ -1,10 +1,10 @@
 {
   vars: {
-    major: 1,
+    major: 2,
     minor: 0,
     patch: 0,
-    build: 20230211,
-    revision: 4,
+    build: 20230215,
+    revision: 0,
     tz: "America/Los_Angeles",
   },
   calcVars: {
