@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["John Lyon-Smith <john@lyon-smith.org>"]
 readme = "README.md"
 description = "A tool to convert Jira CSV data to Gantt chart JSON5"
-repository = "https://github.com/jlyonsmith/jiro_to_gantt"
+repository = "https://github.com/jlyonsmith/jira_to_gantt"
 keywords = ["gantt", "chart", "project", "csv"]
 categories = ["command-line-utilities"]
 license = "Unlicense"
@@ -20,3 +20,7 @@ csv = "1.1.6"
 json5 = "0.4.1"
 serde = { version = "1.0.145", features = ["derive"] }
 gantt_chart = { version = "2.0.0" }
+
+[[bin]]
+name = "jira-to-gantt"
+path = "src/bin/jira_to_gantt.rs"

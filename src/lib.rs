@@ -17,10 +17,11 @@ const JIRA_DAY_IN_SECONDS: f32 = 8.0 * 60.0 * 60.0;
 #[derive(Parser)]
 #[clap(version, about, long_about = None)]
 struct Cli {
-    /// Specify the JSON data file
+    /// The JSON5 input file
     #[clap(value_name = "INPUT_FILE")]
     input_file: Option<PathBuf>,
 
+    /// The SVG output file
     #[clap(value_name = "OUTPUT_FILE")]
     output_file: Option<PathBuf>,
 }
@@ -85,13 +86,12 @@ impl<'a> JiraToGanttTool<'a> {
 
         let chart_data = self.read_jira_csv_file(cli.get_input()?)?;
 
-        self.write_chart_data_file(cli.get_output()?, &chart_data)?;
+        Self::write_chart_data_file(cli.get_output()?, &chart_data)?;
 
         Ok(())
     }
 
     fn write_chart_data_file(
-        &self,
         mut writer: Box<dyn Write>,
         chart_data: &ChartData,
     ) -> Result<(), Box<dyn Error>> {
