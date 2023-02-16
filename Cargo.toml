@@ -20,6 +20,7 @@ csv = "1.1.6"
 json5 = "0.4.1"
 serde = { version = "1.0.145", features = ["derive"] }
 gantt_chart = { version = "2.0.0" }
+easy-error = "1.0.0"
 
 [[bin]]
 name = "jira-to-gantt"

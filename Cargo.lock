@@ -352,6 +352,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "easy-error"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04cc9717c61d2908f50d16ebb5677c7e82ea2bdf7cb52f66b30fe079f3212e16"
+
+[[package]]
 name = "either"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -541,6 +547,7 @@ dependencies = [
  "clap 4.0.11",
  "colored",
  "csv",
+ "easy-error",
  "gantt_chart",
  "json5",
  "serde",

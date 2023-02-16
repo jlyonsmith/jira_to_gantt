@@ -3,12 +3,15 @@ use chrono::NaiveDate;
 use clap::Parser;
 use core::fmt::Arguments;
 use csv::{self, ByteRecord, StringRecord};
+use easy_error::{self, ResultExt};
 use gantt_chart::{ChartData, ItemData};
 use serde::Deserialize;
-use std::error::Error;
-use std::fs::File;
-use std::io::{self, Error as IoError, Read, Write};
-use std::path::PathBuf;
+use std::{
+    error::Error,
+    fs::File,
+    io::{self, Read, Write},
+    path::PathBuf,
+};
 
 mod log_macros;
 
@@ -27,16 +30,25 @@ struct Cli {
 }
 
 impl Cli {
-    fn get_output(&self) -> Result<Box<dyn Write>, IoError> {
+    fn get_output(&self) -> Result<Box<dyn Write>, Box<dyn Error>> {
         match self.output_file {
-            Some(ref path) => File::open(path).map(|f| Box::new(f) as Box<dyn Write>),
+            Some(ref path) => File::create(path)
+                .context(format!(
+                    "Unable to create file '{}'",
+                    path.to_string_lossy()
+                ))
+                .map(|f| Box::new(f) as Box<dyn Write>)
+                .map_err(|e| Box::new(e) as Box<dyn Error>),
             None => Ok(Box::new(io::stdout())),
         }
     }
 
-    fn get_input(&self) -> Result<Box<dyn Read>, IoError> {
+    fn get_input(&self) -> Result<Box<dyn Read>, Box<dyn Error>> {
         match self.input_file {
-            Some(ref path) => File::open(path).map(|f| Box::new(f) as Box<dyn Read>),
+            Some(ref path) => File::open(path)
+                .context(format!("Unable to open file '{}'", path.to_string_lossy()))
+                .map(|f| Box::new(f) as Box<dyn Read>)
+                .map_err(|e| Box::new(e) as Box<dyn Error>),
             None => Ok(Box::new(io::stdin())),
         }
     }
