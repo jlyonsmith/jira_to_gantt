@@ -541,7 +541,7 @@ checksum = "4217ad341ebadf8d8e724e264f13e593e0648f5b3e94b3896a5df283be015ecc"
 
 [[package]]
 name = "jira_to_gantt"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "chrono",
  "clap 4.0.11",

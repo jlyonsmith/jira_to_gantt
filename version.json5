@@ -2,8 +2,8 @@
   vars: {
     major: 2,
     minor: 0,
-    patch: 0,
-    build: 20230215,
+    patch: 1,
+    build: 20230216,
     revision: 0,
     tz: "America/Los_Angeles",
   },
